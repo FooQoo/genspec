@@ -23,14 +23,14 @@
 
 *   **fs (Node.js):** Used for file system operations (reading directories, reading/writing files).
 *   **path (Node.js):** Used for constructing and manipulating file paths.
-*   **`../repository/llm`:** (Assumed) A custom repository module for interacting with a Large Language Model (LLM).  This likely handles API calls to the LLM.
+*   **`../repository/llm`:** A custom repository module for interacting with a Large Language Model (LLM).  This likely handles API calls to the LLM.
 
 ## File Roles and Responsibilities
 
 | File Name                       | Role                                                     | Logic and Functions                                                                                                                                                                                                         | Names of other files used |
 | ------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `generateCopilotInstructionsService.ts` | Generates instructions for GitHub Copilot.         | `findAllReadmesRecursively`: Recursively searches a directory and its subdirectories for `README.md` files.  <br/> `generateCopilotInstructionsService`: Orchestrates the process of finding READMEs and potentially generating instructions based on them. | `../repository/llm`      |
-| `generateReadmeService.ts`         | Generates a README file for a specified directory. | `findSubdirectories`: Finds all subdirectories within a given folder. <br/> `generateReadmeService`: Orchestrates the README generation process for a given folder, potentially calling the LLM repository.           | `../repository/llm`      |
+| `generateCopilotInstructionsService.ts` | Generates instructions for GitHub Copilot based on existing README files.         | `findAllReadmesRecursively`: Recursively searches a directory and its subdirectories for `README.md` files. <br/> `generateCopilotInstructionsService`: Orchestrates the process of finding READMEs and potentially generating instructions based on them, then writes the instructions to a file (default `.github/copilot-instructions.md`).  It resolves `.github` relative to the current working directory. | `../repository/llm`      |
+| `generateReadmeService.ts`         | Generates a README file for a specified directory. | `findSubdirectories`: Finds all subdirectories within a given folder. <br/> `generateReadmeService`: Orchestrates the README generation process for a given folder, potentially calling the LLM repository.  It also can work recursively for all subfolders. It reads the content of files in the folder and prepares them for the LLM. | `../repository/llm`      |
 
 ## Code Style and Examples
 
@@ -109,4 +109,3 @@ export async function serviceFunction({ /* Input parameters */ }: { /* Parameter
 *   Always update the unit tests when making changes to service functions.
 *   When adding new dependencies, ensure that they are properly documented and that they do not introduce any security vulnerabilities.
 *   Consider using a code formatter (e.g., Prettier) and a linter (e.g., ESLint) to enforce code style consistency.
-```

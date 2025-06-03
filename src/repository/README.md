@@ -29,9 +29,9 @@
 
 | File Name     | Role                                            | Logic and Functions                                                                                                                         | Names of other files used |
 | ------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `llm.ts`      | Abstraction and Factory for LLM Clients         | - Defines the `LLMRepository` interface.  - Provides the `getLLMRepository` factory function.                                                | `openai.ts`, `gemini.ts`  |
-| `openai.ts`   | Implementation for OpenAI LLM interactions   | - Defines the `OpenAIClient` class, implementing `LLMRepository`.  - Implements the `call` method to interact with the OpenAI API.      - Provides `createOpenAIClient` function.                                  | `llm.ts`                 |
-| `gemini.ts`   | Implementation for Gemini LLM interactions   | - Defines the `GeminiClient` class, implementing `LLMRepository`.  - Implements the `call` method to interact with the Gemini API.        | `llm.ts`                 |
+| `llm.ts`      | Abstraction and Factory for LLM Clients         | - Defines the `LLMRepository` interface.  - Provides the `getLLMRepository` factory function, which instantiates and returns the appropriate LLM client based on the specified model.  Throws an error if the model is not supported.                                                | `openai.ts`, `gemini.ts`  |
+| `openai.ts`   | Implementation for OpenAI LLM interactions   | - Defines the `OpenAIClient` class, implementing `LLMRepository`.  - Implements the `call` method to interact with the OpenAI API and returns the response. - Provides `createOpenAIClient` function to asynchronously create an instance of the OpenAI client.    Sets a default model (`gpt-4o`) if one is not provided.                                 | `llm.ts`                 |
+| `gemini.ts`   | Implementation for Gemini LLM interactions   | - Defines the `GeminiClient` class, implementing `LLMRepository`.  - Implements the `call` method to interact with the Gemini API and returns the response. Sets a default model (`gemini-2.0-flash`) if one is not provided.        | `llm.ts`                 |
 
 ### Logic and Functions Details
 
@@ -80,6 +80,9 @@
 *   **`openai.ts` (Implementation):**
     Implementations like this one for OpenAI, MUST implement the `LLMRepository` interface.  The `call` method should use the appropriate API to interact with the LLM and return the response. The specific API and data transformations depend on the LLM being used.
 
+*   **`gemini.ts` (Implementation):**
+    Implementations like this one for Gemini, MUST implement the `LLMRepository` interface. The `call` method should use the appropriate API to interact with the LLM and return the response.
+
 ## Coding Rules Based on the Above
 
 1.  **Adhere to Naming Conventions:** Consistently use the defined naming conventions for files, classes, variables, and methods.
@@ -88,6 +91,7 @@
 4.  **Handle Errors Gracefully:** Implement robust error handling to catch and manage potential errors during API calls.
 5.  **Use Configuration Objects:** LLM clients should be configurable via a configuration object passed to their constructor.
 6.  **Keep it Simple:** Follow the KISS principle.
+7.  **Default Models:** All LLM clients should have a default model in case one is not passed to the constuctor.
 
 ## Notes for Developers
 
@@ -95,4 +99,3 @@
 *   Update the `getLLMRepository` function in `llm.ts` to support the new LLM.
 *   Ensure that the new LLM client is properly configured with an API key and other necessary parameters.
 *   Thoroughly test the new LLM integration to ensure that it works as expected.
-```
