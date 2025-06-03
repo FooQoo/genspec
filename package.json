@@ -1,0 +1,26 @@
+{
+  "name": "genspec",
+  "version": "1.0.0",
+  "main": "bin/index.js",
+  "bin": {
+    "genspec": "bin/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "postbuild": "echo '#!/usr/bin/env node' | cat - bin/index.js > temp && mv temp bin/index.js && chmod +x bin/index.js",
+    "start": "ts-node src/index.ts"
+  },
+  "type": "commonjs",
+  "license": "MIT",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@google/genai": "^1.3.0",
+    "commander": "^14.0.0",
+    "openai": "^5.0.2"
+  }
+}

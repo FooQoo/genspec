@@ -1,0 +1,43 @@
+import { OpenAI } from 'openai';
+import { LLMRepository } from './llm';
+
+export interface OpenAIConfig {
+  apiKey: string;
+  model?: string;
+  apiUrl?: string;
+}
+
+class OpenAIClient implements LLMRepository {
+  private client: OpenAI;
+  private model: string;
+
+  constructor(config: OpenAIConfig) {
+    this.client = new OpenAI({
+      apiKey: config.apiKey,
+      baseURL: config.apiUrl || 'https://api.openai.com/v1',
+    });
+    this.model = config.model || 'gpt-4o';
+  }
+
+  async call(prompt: string): Promise<string> {
+    const res = await this.client.chat.completions.create({
+      model: this.model,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    return res.choices[0].message.content || '';
+  }
+}
+
+export const createOpenAIClient = async (
+  apiKey: string,
+  model?: string,
+  apiUrl?: string,
+): Promise<OpenAIClient> => {
+  return new OpenAIClient({
+    apiKey,
+    model,
+    apiUrl,
+  });
+};
+
+export default OpenAIClient;
