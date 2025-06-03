@@ -3,7 +3,7 @@
 ## Overview
 
 - **Folder name:** src
-- **Purpose:** This folder contains the source code for a tool that automates the generation of `README.md` files and Copilot configuration files for a given directory. It leverages libraries like `commander` for command-line argument parsing and integrates with LLMs (Large Language Models) to generate content based on file contents. The code is structured to be modular and extensible, supporting multiple LLM providers.
+- **Purpose:** This folder contains the source code for a command-line tool that automates the generation of `README.md` files and Copilot configuration files. It leverages libraries like `commander` for command-line argument parsing and integrates with Large Language Models (LLMs) such as OpenAI and Gemini to generate content based on the contents of files within a directory.  The code is designed with modularity in mind, allowing for easy extension and support for different LLM providers.
 
 ## Naming Conventions
 
@@ -15,113 +15,69 @@
 ## Design Policy
 
 - The code follows a modular design, separating concerns into different services and repositories.
-- The `index.ts` file serves as the entry point, parsing command-line arguments using `commander`.
-- Services handle the core application logic, orchestrating calls to repositories.
-- Repositories abstract interactions with external services, such as LLMs.
+- `index.ts` serves as the entry point, handling command-line argument parsing and orchestration.
+- Services encapsulate the core logic for generating READMEs and Copilot files.
+- Repositories handle interactions with external services like LLMs.
+- Interfaces define contracts for data structures and function signatures.
 
 ## Technologies and Libraries Used
 
-- **commander:** For parsing command-line arguments.
-- **fs (Node.js):** For file system operations.
-- **path (Node.js):** For path manipulation.
-- **openai:**  A library for interacting with OpenAI models.
-- **@google/genai:** A library for interacting with Google Gemini models.
+- TypeScript: Primary programming language.
+- Commander: Command-line argument parsing.
+- OpenAI/Gemini SDKs (Hypothetical): Libraries for interacting with OpenAI or Gemini APIs (implementation detail dependent on LLM chosen).
+- Node.js: Runtime environment.
+- Axios or similar (Hypothetical): For making HTTP requests to LLM APIs.
+- File system APIs (fs): For reading and writing files.
 
 ## File Roles
 
-| File name                               | Role                                                                                | Logic and functions                                                                                                                                              | Names of other files used             |
-| --------------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `index.ts`                              | Entry point of the application.                                                     | - Parses command-line arguments using `commander`. - Calls the appropriate service based on the command.                                                      | `GenerateReadmeService.ts`, `generateCopilotInstructionsService.ts` |
-| `service/generateReadmeService.ts`      | Generates a `README.md` file based on folder contents.                              | - `findFiles`: Recursively or non-recursively searches for files in a directory. - Generates prompts based on found files and sends to an LLM. - Writes the generated README content to a file. | `repository/llm.ts`                  |
-| `service/generateCopilotInstructionsService.ts` | Generates a Copilot configuration file.                                             | - `findAllReadmesRecursively`: Recursively searches for `README.md` files in a directory. - Concatenates README content. - Generates prompt for LLM - Saves to file.                             | `repository/llm.ts`                  |
-| `repository/llm.ts`                     | Abstract factory for creating LLM clients.                                          | - `getLLMRepository`: Returns an instance of the appropriate LLM client (OpenAI or Gemini) based on the specified model.                                       | `repository/openai.ts`, `repository/gemini.ts` |
-| `repository/openai.ts`                  | Implements the `LLMRepository` interface for OpenAI models.                         | - `OpenAIClient.call`: Sends a prompt to the OpenAI API and returns the response.                                                                           | `repository/llm.ts`                  |
-| `repository/gemini.ts`                  | Implements the `LLMRepository` interface for Gemini models.                         | - `GeminiClient.call`: Sends a prompt to the Gemini API and returns the response.                                                                           | `repository/llm.ts`                  |
+| File Name                    | Role                               | Logic and Functions                                                                                                                                                                     | Names of other files used           |
+| ---------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `index.ts`                   | Entry point and command handling   | - Initializes the Commander program.  - Defines command-line options for `readme` and `copilot` commands.  - Invokes the appropriate service based on the chosen command. | `GenerateReadmeService.ts`, `generateCopilotInstructionsService.ts` |
+| `GenerateReadmeService.ts`   | Generates the `README.md` file   | - Accepts folder path and options.  - Reads file contents from the specified directory.  - Sends file contents to an LLM to generate README content.  - Writes the generated content to `README.md`. |  LLM repository (hypothetical)     |
+| `generateCopilotInstructionsService.ts` | Generates Copilot configuration | - Collects README.md and any existing configuration files. - Sends to the LLM to summarize as Copilot configuration file format. - Writes to copilot.json or similar.                 | LLM repository (hypothetical)      |
 
 ## Code Style and Examples
 
-- **Asynchronous Operations:** The code extensively uses `async/await` for handling asynchronous operations, particularly when interacting with the file system and LLM APIs.
+- **Asynchronous Operations:** Use `async/await` for handling asynchronous operations like file I/O and API calls.
 
   ```typescript
-  async function generateReadmeService(options: GenerateReadmeOptions) {
-    const files = await findFiles(options.folderPath); // Example of using async function
-    // ... more async operations
+  async function generateReadme(folderPath: string): Promise<void> {
+    // ...
+    const fileContents = await fs.promises.readFile(filePath, 'utf-8');
+    // ...
   }
   ```
 
-- **Interface-Based Programming:** The `LLMRepository` interface defines a contract for interacting with different LLMs, promoting loose coupling and testability.
-
-  ```typescript
-  interface LLMRepository {
-    call(prompt: string): Promise<string>;
-  }
-
-  class OpenAIClient implements LLMRepository {
-    async call(prompt: string): Promise<string> {
-      // Implementation for OpenAI
-    }
-  }
-  ```
-
-- **Error Handling:** The code includes basic error handling with `try...catch` blocks.
+- **Error Handling:** Implement robust error handling using `try/catch` blocks.
 
   ```typescript
   try {
-    const result = await this.client.chat.completions.create({ // example
-      model: this.model,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    return res.choices[0].message.content || '';
+    const readmeContent = await llmService.generateReadme(fileContents);
+    await fs.promises.writeFile('README.md', readmeContent);
   } catch (error) {
-      console.error('Error calling Gemini API:', error);
-      throw error; // Re-throw for handling higher up the call stack
+    console.error('Error generating README:', error);
   }
   ```
+
+- **Promises:** All file operations should use the promise-based APIs of the `fs` module (`fs.promises`).
 
 ## File Templates and Explanations
 
-- **Service File Template:**
-
-  ```typescript
-  // service/exampleService.ts
-  import { /* Dependencies */ } from '...';
-
-  export async function exampleService(options: ExampleOptions) {
-    // Implementation logic
-  }
-
-  interface ExampleOptions {
-    // Options for the service
-  }
-  ```
-
-- **Repository File Template:**
-
-  ```typescript
-  // repository/exampleRepository.ts
-  import { LLMRepository } from './llm';
-
-  class ExampleClient implements LLMRepository {
-    async call(prompt: string): Promise<string> {
-      // Implementation logic
-    }
-  }
-
-  export default ExampleClient;
-  ```
+- No specific file templates are defined.  The structure is determined by the logic within each service.
 
 ## Coding Rules
 
-- **Single Responsibility Principle:** Each function and class should have a single, well-defined purpose.
-- **Don't Repeat Yourself (DRY):** Avoid duplicating code by creating reusable functions and modules.
-- **Keep Functions Short:**  Aim for functions that are less than 50 lines of code.  If a function is getting long, consider refactoring it into smaller, more focused functions.
-- **Use Descriptive Names:**  Use clear and descriptive names for variables, functions, and classes to improve code readability.
-- **Write Unit Tests:**  Write unit tests to ensure the correctness of your code.
-- **Follow the Established Naming Conventions:**  Consistent naming makes the project easier to understand and maintain.
+- **Use TypeScript features:** Utilize features like interfaces, classes, and generics to create maintainable and type-safe code.
+- **Keep functions small and focused:** Each function should have a single responsibility.
+- **Write clear and concise comments:** Document the purpose of functions and complex logic.
+- **Handle errors gracefully:**  Implement proper error handling and logging.
+- **Follow the naming conventions:** Maintain consistency in naming conventions.
 
 ## Notes for Developers
 
-- When adding support for new LLMs, create a new repository file implementing the `LLMRepository` interface.
-- Ensure proper error handling is implemented to catch potential exceptions during API calls.
-- When LLMs are contextually expensive, consider adding file size or token limits to the prompts.
-- Remember to set the API key for selected LLM either as system environment variables or through command line.
+- When implementing the LLM integration, consider using an abstraction layer (e.g., a repository) to decouple the services from specific LLM providers.  This will make it easier to switch between OpenAI, Gemini, or other LLMs in the future.
+- Implement thorough logging for debugging and monitoring purposes.
+- Add unit tests to ensure the correctness of the code.
+- Consider adding support for customizing the LLM prompts used for generating READMEs and Copilot files.
+- Make the tool configurable using environment variables or a configuration file.

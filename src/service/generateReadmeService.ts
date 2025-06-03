@@ -2,18 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { getLLMRepository } from '../repository/llm';
 
-function findFiles(folderPath: string, recursive: boolean): string[] {
-  let files: string[] = [];
-  const entries = fs.readdirSync(folderPath, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(folderPath, entry.name);
-    if (entry.isDirectory() && recursive) {
-      files = files.concat(findFiles(fullPath, true));
-    } else if (entry.isFile()) {
-      files.push(fullPath);
-    }
-  }
-  return files;
+function findSubdirectories(folderPath: string): string[] {
+  return fs.readdirSync(folderPath, { withFileTypes: true })
+    .filter(entry => entry.isDirectory())
+    .map(entry => path.join(folderPath, entry.name));
 }
 
 export async function generateReadmeService({
@@ -33,11 +25,12 @@ export async function generateReadmeService({
     console.error(`Directory not found: ${folderPath}`);
     return;
   }
-  const files = findFiles(folderPath, recursive).filter(f => fs.statSync(f).isFile());
+  // 1. Generate README for this folder only
+  const files = fs.readdirSync(folderPath).filter(f => fs.statSync(path.join(folderPath, f)).isFile());
   const fileSummaries = files
     .map(file => {
-      const rel = path.relative(folderPath, file);
-      const content = fs.readFileSync(file, 'utf-8').slice(0, 1000);
+      const rel = path.relative(folderPath, path.join(folderPath, file));
+      const content = fs.readFileSync(path.join(folderPath, file), 'utf-8').slice(0, 1000);
       return `## ${rel}\n\u0060\u0060\u0060\n${content}\n\u0060\u0060\u0060`;
     })
     .join('\n\n');
@@ -50,5 +43,18 @@ export async function generateReadmeService({
     console.log(`✅ README.md generated: ${outputPath}`);
   } else {
     console.error('❌ Failed to generate README.md');
+  }
+  // 2. If recursive is true, apply the same process recursively to subdirectories
+  if (recursive) {
+    const subdirs = findSubdirectories(folderPath);
+    for (const subdir of subdirs) {
+      await generateReadmeService({
+        folderPath: subdir,
+        model,
+        apiKey,
+        apiUrl,
+        recursive: true,
+      });
+    }
   }
 }

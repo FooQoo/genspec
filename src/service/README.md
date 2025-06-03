@@ -15,92 +15,98 @@
 ## Design Policy
 
 *   Services should be thin and focused on orchestration, delegating complex operations to other modules like repositories or utility functions.
-*   Services should not directly access request or response objects from the HTTP layer.
-*   Services should handle error cases gracefully and return meaningful error messages or throw exceptions.
-*   Services should be designed to be easily testable, ideally with unit tests.
+*   Services should not directly access data sources; this is the responsibility of repositories.
+*   Services should handle input validation and error handling.
+*   Services should be designed to be easily testable, ideally through dependency injection.
 
 ## Technologies and Libraries Used
 
-*   TypeScript
-*   fs (Node.js file system module)
-*   path (Node.js path module)
+*   **fs (Node.js):** Used for file system operations (reading directories, reading/writing files).
+*   **path (Node.js):** Used for constructing and manipulating file paths.
+*   **`../repository/llm`:** (Assumed) A custom repository module for interacting with a Large Language Model (LLM).  This likely handles API calls to the LLM.
 
-## File Roles
+## File Roles and Responsibilities
 
-| File Name               | Role                                                                 | Logic and Functions                                                                                                                                                             | Names of other files used |
-| ----------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| generateReadmeService.ts | Generates a README.md file based on the contents of a specified folder. | `generateReadmeService`: Reads files from a directory, extracts the first 1000 characters of each file, and constructs a prompt for an LLM to generate a README.md content. | `../repository/llm`       |
+| File Name                       | Role                                                     | Logic and Functions                                                                                                                                                                                                         | Names of other files used |
+| ------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `generateCopilotInstructionsService.ts` | Generates instructions for GitHub Copilot.         | `findAllReadmesRecursively`: Recursively searches a directory and its subdirectories for `README.md` files.  <br/> `generateCopilotInstructionsService`: Orchestrates the process of finding READMEs and potentially generating instructions based on them. | `../repository/llm`      |
+| `generateReadmeService.ts`         | Generates a README file for a specified directory. | `findSubdirectories`: Finds all subdirectories within a given folder. <br/> `generateReadmeService`: Orchestrates the README generation process for a given folder, potentially calling the LLM repository.           | `../repository/llm`      |
 
 ## Code Style and Examples
 
-*   **Asynchronous Operations:**  Use `async/await` for handling asynchronous operations. Example:
+*   **Asynchronous Operations:** Services use `async/await` for handling asynchronous operations, such as reading files or calling the LLM repository.
 
     ```typescript
-    async function generateReadmeService(options: {folderPath:string,model:string, apiKey:string, apiUrl?:string}) {
-        // ... asynchronous operations using await ...
+    export async function generateReadmeService({ folderPath, model, apiKey, apiUrl }: { folderPath: string; model: string; apiKey: string; apiUrl?: string; }) {
+      // ... asynchronous operations using await ...
     }
     ```
 
-*   **Error Handling:** Implement try-catch blocks to catch potential errors and handle them gracefully.
+*   **Error Handling:** Services should implement basic error handling (e.g., checking if a directory exists) and potentially throw exceptions or return error codes as needed.
 
     ```typescript
-    try {
-        const files = fs.readdirSync(folderPath);
-        // ...
-    } catch (error) {
-        console.error("Error reading directory:", error);
-        return;
+    if (!fs.existsSync(folderPath)) {
+      console.error(`Directory not found: ${folderPath}`);
+      return;
     }
     ```
 
-*   **Import Statements:** Use absolute imports for modules within the project.
+*   **File System Operations:** The `fs` module is used extensively for interacting with the file system. Ensure proper error handling when using `fs` functions.
 
     ```typescript
-    import { getLLMRepository } from '../repository/llm';
+    const files = fs.readdirSync(folderPath).filter(f => fs.statSync(path.join(folderPath, f)).isFile());
     ```
 
 ## File Templates and Explanations
 
-All service files should follow the following structure:
+A typical service file structure:
 
 ```typescript
-// Import necessary modules
+import { getLLMRepository } from '../repository/llm'; // Example Dependency
 import fs from 'fs';
 import path from 'path';
-import { /* dependencies */ } from '../repository/llm';
 
-// Define the service function
-export async function exampleService(params: { /* parameters */ }) {
+// Helper Functions (Optional)
+function helperFunction(): void {
+  // ...
+}
+
+export async function serviceFunction({ /* Input parameters */ }: { /* Parameter Types */ }): Promise<void> {
   try {
-    // Implement the service logic
-    // Use await for asynchronous operations
-    const result = await /* asynchronous operation */;
-    return result;
+    // 1. Input validation
+    // ...
+
+    // 2. Data retrieval and processing (using repositories or other services)
+    const llm = getLLMRepository();
+    // ...
+
+    // 3. Business logic
+    // ...
+
+    // 4. Return the result
+    return ;
   } catch (error) {
-    // Handle errors appropriately
-    console.error('An error occurred:', error);
-    throw error; // or return an error message
+    console.error("Error in serviceFunction:", error);
+    throw error; // Or return an error code/message
   }
 }
 ```
 
 ## Coding Rules
 
-*   Adhere to the Naming Conventions specified above.
-*   Implement comprehensive error handling using try-catch blocks.
-*   Utilize `async/await` for asynchronous operations to improve code readability.
-*   Write clear and concise comments to explain complex logic.
-*   Keep service functions focused on orchestration and delegate complex operations.
-*   Ensure all services are testable through unit tests.
-*   All functions should have descriptive names that clearly indicate their purpose.
-*   Avoid deeply nested code blocks to improve readability.
-*   Prioritize code clarity and maintainability over premature optimization.
-*   Parameters passed to functions should be explicitly typed.
+*   **Single Responsibility Principle:** Each service function should have a clear and focused purpose.
+*   **Dependency Injection:**  Use dependency injection to inject dependencies (e.g., repositories) into services to improve testability and maintainability.
+*   **Error Handling:**  Implement robust error handling to gracefully handle potential errors.
+*   **Logging:**  Use a logging mechanism to log important events and errors for debugging purposes.
+*   **Asynchronous Operations:** Handle asynchronous operations properly using `async/await`.
+*   **Immutability:** Favor immutability where possible to prevent unexpected side effects.
+*   **Code Comments:**  Add clear and concise comments to explain complex logic and important decisions.
+*   **Unit Tests:** Write comprehensive unit tests to ensure the correctness of service functions.
 
 ## Notes for Developers
 
-*   When creating new services, consider the existing architecture and try to maintain a consistent style.
-*   Before making changes to existing services, ensure you understand their purpose and how they are used by other parts of the application.
-*   Document all new services and modifications to existing services thoroughly.
-*   Pay special attention to security considerations when handling sensitive data.
-*   When in doubt, consult with other developers or refer to the project's coding standards.
+*   When modifying existing services, ensure that you do not introduce breaking changes without proper consideration.
+*   Always update the unit tests when making changes to service functions.
+*   When adding new dependencies, ensure that they are properly documented and that they do not introduce any security vulnerabilities.
+*   Consider using a code formatter (e.g., Prettier) and a linter (e.g., ESLint) to enforce code style consistency.
+```
