@@ -21,16 +21,16 @@
 
 ## Technologies and Libraries Used
 
-*   **fs (Node.js):** Used for file system operations (reading directories, reading/writing files).
+*   **fs (Node.js):** Used for file system operations (reading directories, reading/writing files, checking file existence).
 *   **path (Node.js):** Used for constructing and manipulating file paths.
 *   **`../repository/llm`:** A custom repository module for interacting with a Large Language Model (LLM).  This likely handles API calls to the LLM.
 
 ## File Roles and Responsibilities
 
-| File Name                       | Role                                                     | Logic and Functions                                                                                                                                                                                                         | Names of other files used |
-| ------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `generateCopilotInstructionsService.ts` | Generates instructions for GitHub Copilot based on existing README files.         | `findAllReadmesRecursively`: Recursively searches a directory and its subdirectories for `README.md` files. <br/> `generateCopilotInstructionsService`: Orchestrates the process of finding READMEs and potentially generating instructions based on them, then writes the instructions to a file (default `.github/copilot-instructions.md`).  It resolves `.github` relative to the current working directory. | `../repository/llm`      |
-| `generateReadmeService.ts`         | Generates a README file for a specified directory. | `findSubdirectories`: Finds all subdirectories within a given folder. <br/> `generateReadmeService`: Orchestrates the README generation process for a given folder, potentially calling the LLM repository.  It also can work recursively for all subfolders. It reads the content of files in the folder and prepares them for the LLM. | `../repository/llm`      |
+| File Name                                     | Role                                                                                 | Logic and Functions                                                                                                                                                                                                                                                      | Names of other files used |
+| --------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `generateCopilotInstructionsService.ts`       | Generates instructions for GitHub Copilot based on existing README files recursively. | `findAllReadmesRecursively`: Recursively searches a directory and its subdirectories for `README.md` files. <br/> `generateCopilotInstructionsService`: Orchestrates the process of finding READMEs and potentially generating instructions based on them, then writes the instructions to a file (default `.github/copilot-instructions.md`).  It resolves `.github` relative to the current working directory. | `../repository/llm`      |
+| `generateReadmeService.ts`                    | Generates a README file for a specified directory, optionally recursively.        | `findSubdirectories`: Finds all subdirectories within a given folder. <br/> `generateReadmeService`: Orchestrates the README generation process for a given folder, potentially calling the LLM repository. It also can work recursively for all subfolders. It reads the content of files in the folder and prepares them for the LLM. | `../repository/llm`      |
 
 ## Code Style and Examples
 

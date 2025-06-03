@@ -51,7 +51,8 @@ These guidelines apply to the entire project.
 *   **Asynchronous Operations:** Use `async/await` for asynchronous tasks to prevent blocking the main thread and to improve code readability. Return types of asynchronous functions should be `Promise<T>`, where `T` is the resolved type.
 *   **Comments:** Write clear and concise comments to explain complex logic. Document all new services and modifications to existing services thoroughly.
 *   **Testing:** Ensure all services are testable through unit tests. Thoroughly test your implementation to ensure that it functions correctly and handles edge cases.
-*   **Security:** Ensure that all API keys and sensitive information are handled securely. Pay special attention to security considerations when handling sensitive data.
+*   **Security:** Ensure that all API keys and sensitive information are handled securely. Pay special attention to security considerations when handling sensitive data. Implement a more secure mechanism for handling API keys, such as reading them from environment variables or a configuration file instead of passing them via command-line arguments.
+*   **Rate Limiting:** Implement rate limiting to prevent exceeding the API limits of the LLM service.
 *   **Code Clarity:** Prioritize code clarity and maintainability over premature optimization.
 *   **Parameters:** Parameters passed to functions should be explicitly typed.
 *   **Naming Conventions:**
@@ -60,6 +61,7 @@ These guidelines apply to the entire project.
     *   Interfaces are prefixed with `I` (e.g., `IGenerateReadmeOptions`, `LLMRepository`).
 *   **Modularity:** The code follows a modular design, separating concerns into different services and modules.
 *   **Absolute Imports:** Use absolute imports for modules within the project.
+*   **KISS (Keep It Simple, Stupid):** Follow the KISS principle.
 
 ---
 
@@ -67,12 +69,16 @@ These guidelines apply to the entire project.
 
 *   **Purpose:** Contains the source code for the command-line tool.
 *   **Design Policy:** The code follows a modular design, separating concerns into different services. The `index.ts` file serves as the entry point, parsing command-line arguments. The `GenerateReadmeService.ts` handles the core logic of interacting with the LLM and generating the README content.
-*   **Technologies and Libraries Used:** Commander, TypeScript, LLM API (abstracted).
+*   **Technologies and Libraries Used:** Commander, TypeScript, LLM API (abstracted), Node.js file system APIs (`fs` module).
 *   **Coding Rules Based on the Above:**
     1.  **Follow Naming Conventions:** Adhere to PascalCase for files, camelCase for functions and variables, and `I` prefix for interfaces.
     2.  **Modular Design:** Separate concerns into different services and modules.
     3.  **Asynchronous Operations:** Use `async/await` for asynchronous tasks.
     4.  **Command-Line Arguments:** Use `commander` for parsing command-line arguments.
+    5.  **Strict TypeScript:** Leverage TypeScript's features, including interfaces, classes, and generics, to write maintainable and type-safe code.
+    6.  **Single Responsibility Principle:** Adhere to the Single Responsibility Principle, ensuring that each function has a single, well-defined purpose.
+    7.  **Clear Documentation:** Write clear and concise comments to explain the purpose of functions and complex logic.
+    8.  **Graceful Error Handling:** Implement proper error handling and logging mechanisms to handle errors gracefully and provide informative messages.
 
 *   **Notes for Developers:**
     *   Before running, ensure you have the necessary LLM API key and URL configured (if applicable).
@@ -80,6 +86,10 @@ These guidelines apply to the entire project.
     *   Consider adding more detailed error handling and logging for production use.
     *   Explore options for customizing the README generation process, such as providing a custom prompt or template.
     *   Remember to install the necessary dependencies (e.g., `commander`) using `npm install` or `yarn install`.
+    *   The LLM integration with OpenAI or Gemini is **not fully implemented**. The code includes placeholders for API calls but requires implementation of the actual API request logic. Developers will need to choose an appropriate HTTP client library (e.g., `axios`, `node-fetch`) and implement the necessary API calls to the chosen LLM service.
+    *   Add appropriate error handling for API requests, including checking the status code and logging errors.
+    *   Comprehensive logging is currently missing. Implement logging to track the execution flow, record errors, and aid in debugging. Consider using a logging library like `winston` or `pino`.
+    *   Unit tests are **not implemented**. Writing unit tests is crucial for ensuring the correctness and reliability of the code. Use a testing framework like `Jest` or `Mocha` to write unit tests for each service and function.
 
 ---
 
@@ -94,12 +104,19 @@ These guidelines apply to the entire project.
     *   Use the `getLLMRepository` factory function to create LLM client instances.
     *   Handle errors appropriately and provide informative error messages.
     *   Ensure that all API keys and sensitive information are handled securely.
+    *   Adhere to Naming Conventions: Consistently use the defined naming conventions for files, classes, variables, and methods.
+    *   Use Asynchronous Operations: All interactions with LLMs must be asynchronous.
+    *   Handle Errors Gracefully: Implement robust error handling to catch and manage potential errors during API calls.
+    *   Use Configuration Objects: LLM clients should be configurable via a configuration object passed to their constructor.
+    *   Default Models: All LLM clients should have a default model in case one is not passed to the constructor.
 
 *   **Notes for Developers:**
     *   When adding a new LLM integration, create a new file in this directory.
     *   Remember to update the `getLLMRepository` function in `llm.ts` to include the new LLM.
     *   Thoroughly test your implementation to ensure that it functions correctly and handles edge cases.
     *   Document your code clearly and concisely.
+    *   Ensure that the new LLM client is properly configured with an API key and other necessary parameters.
+    *   Thoroughly test the new LLM integration to ensure that it works as expected.
 
 ---
 
@@ -119,6 +136,12 @@ These guidelines apply to the entire project.
     *   Avoid deeply nested code blocks to improve readability.
     *   Prioritize code clarity and maintainability over premature optimization.
     *   Parameters passed to functions should be explicitly typed.
+    *   Single Responsibility Principle: Each service function should have a clear and focused purpose.
+    *   Dependency Injection:  Use dependency injection to inject dependencies (e.g., repositories) into services to improve testability and maintainability.
+    *   Logging:  Use a logging mechanism to log important events and errors for debugging purposes.
+    *   Immutability: Favor immutability where possible to prevent unexpected side effects.
+    *   Code Comments:  Add clear and concise comments to explain complex logic and important decisions.
+    *   Unit Tests: Write comprehensive unit tests to ensure the correctness of service functions.
 
 *   **Notes for Developers:**
     *   When creating new services, consider the existing architecture and try to maintain a consistent style.
@@ -126,3 +149,7 @@ These guidelines apply to the entire project.
     *   Document all new services and modifications to existing services thoroughly.
     *   Pay special attention to security considerations when handling sensitive data.
     *   When in doubt, consult with other developers or refer to the project's coding standards.
+    *   When modifying existing services, ensure that you do not introduce breaking changes without proper consideration.
+    *   Always update the unit tests when making changes to service functions.
+    *   When adding new dependencies, ensure that they are properly documented and that they do not introduce any security vulnerabilities.
+    *   Consider using a code formatter (e.g., Prettier) and a linter (e.g., ESLint) to enforce code style consistency.
