@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI } from '@google/genai';
 import { LLMRepository } from './llm';
 
 export interface GeminiConfig {
@@ -16,56 +16,33 @@ class GeminiClient implements LLMRepository {
   }
 
   /**
-   * Make the API call to Gemini
+   * Simple chat API call to Gemini
    */
   async call(prompt: string): Promise<string> {
     try {
-      const systemPrompt =
-        'You are a senior software developer conducting a thorough code review. You provide detailed, actionable feedback in JSON format as requested.';
-      const responseSchema = {
-        type: Type.OBJECT,
-        properties: {
-          filename: { type: Type.STRING },
-          explanation: { type: Type.STRING },
-          checklistItems: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                id: { type: Type.STRING },
-                description: { type: Type.STRING },
-                status: { type: Type.STRING, enum: ['OK', 'WARNING', 'ERROR', 'PENDING'] },
-              },
-              propertyOrdering: ['id', 'description', 'status'],
-              required: ['id', 'description', 'status'],
-            },
-          },
-        },
-        required: ['filename', 'explanation', 'checklistItems'],
-        propertyOrdering: ['filename', 'explanation', 'checklistItems'],
-      };
-
       const result = await this.client.models.generateContent({
         model: this.model,
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        config: {
-          responseMimeType: 'application/json',
-          responseSchema,
-          systemInstruction: { role: 'system', parts: [{ text: systemPrompt }] },
-        },
       });
-
-      console.info('Gemini response:', result.text);
-
-      return result.text || '';
+      if (result.text) return result.text;
+      if (
+        result.candidates &&
+        result.candidates.length > 0 &&
+        result.candidates[0].content &&
+        Array.isArray(result.candidates[0].content.parts) &&
+        result.candidates[0].content.parts.length > 0 &&
+        typeof result.candidates[0].content.parts[0].text === 'string'
+      ) {
+        return result.candidates[0].content.parts[0].text || '';
+      }
+      return '';
     } catch (error) {
       console.error('Error calling Gemini API:', error);
       throw error;
     }
   }
-};
+}
 
-// Create and export Gemini client instance
 export const createGeminiClient = async (
   apiKey: string,
   model?: string,
