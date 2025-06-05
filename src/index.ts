@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { generateReadmeService } from "./service/GenerateReadmeService";
+import { generateReadmeService } from "./service/generateReadmeService";
 import { generateCopilotInstructionsService } from "./service/generateCopilotInstructionsService";
 
 const program = new Command();
