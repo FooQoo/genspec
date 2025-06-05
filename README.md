@@ -14,12 +14,14 @@ genspec <command> [options]
 ```
 
 # Commands
-- `readme`: Generate a README file.
-- `copilot`: Generate a Copilot configuration file.
+- `readme`: Generate a README file based on folder contents
+- `copilot`: Generate a Copilot configuration file by integrating all README.md and existing copilot-instructions files
 
 # Options
-- `--directory <path>`: Specify the directory to generate the file in (default: current directory).
-- `--recursive`: Recursively generate files in subdirectories. 
-- `--model <model>`: Specify the model to use for LLM generation. choose from `gpt-xxx` or `gemini-xxx`.
-- `--api-key <key>`: Specify the API key for the LLM service.
-- `--api-url <url>`: If you use OpenAI, specify the API URL for the LLM service. (default: https://api.openai.com/v1)
+- `-d, --directory <path>`: Target directory (default: current working directory)
+- `-m, --model <model>`: LLM model (`gpt-4o` or `gemini-2.0-flash`)
+- `--llm-api-key <key>`: API key
+- `--llm-api-url <url>`: API URL
+- `-r, --recursive`: Recursively search files in subdirectories (default: false)
+- `-l, --language <language>`: Language for the output (`ja`/`en`/`ko`/`zh`, default: `en`)
+- `--env-mode`: Load API key and URL from environment variables

@@ -21,13 +21,13 @@ export async function generateCopilotInstructionsService({
   model,
   apiKey,
   apiUrl,
-  output = '.github/copilot-instructions.md',
+  language = 'en',
 }: {
   rootDir: string;
   model: string;
   apiKey: string;
   apiUrl?: string;
-  output?: string;
+  language?: string;
 }) {
   // Always resolve .github relative to the current working directory
   const cwd = process.cwd();
@@ -45,25 +45,25 @@ export async function generateCopilotInstructionsService({
     })
     .join('\n---\n');
 
-  // 3. Read existing copilot-instructions.md if exists (in .github under cwd)
-  let existingCopilotInstructions = '';
-  if (fs.existsSync(outputPath)) {
-    existingCopilotInstructions = fs.readFileSync(outputPath, 'utf-8');
-  }
+  // 3. Generate copilot-instructions.md using LLM (READMEのみプロンプトに含める)
+  const prompt = `You are to create a single copilot-instructions.md file for the entire project, based only on the following README files from each folder. Please output the copilot-instructions in ${language} language.\nIntegrate the rules, coding conventions, and important notes from all folders.\nOutput only raw markdown content. Do NOT wrap with code block. Do NOT use any code block (such as triple backticks \`\`\` or \`\`\`markdown). Output only pure markdown text, never wrap any part in a code block.\n\n${allReadmeContents}`;
 
-  // 4. Generate copilot-instructions.md using LLM
-  const prompt = `You are to create a single copilot-instructions.md file for the entire project, based on the following README files from each folder and the existing copilot-instructions.md if present.\nIntegrate the rules, coding conventions, and important notes from all folders and the existing copilot-instructions.md.\nOutput only raw markdown content. Do NOT wrap with code block.\n\n${existingCopilotInstructions ? '## Existing copilot-instructions.md\n' + existingCopilotInstructions + '\n---\n' : ''}${allReadmeContents}`;
+  const successMessage = `✅ Copilot instructions generated: ${outputPath}`;
+  const failureMessage = `❌ Failed to generate copilot-instructions.md`;
 
   const llm = await getLLMRepository({ model, apiKey, apiUrl });
-  const content = await llm.call(prompt);
+  let instructionContent = await llm.call(prompt);
+  // READMEを結合
+  const readmeSection = '\n\n---\n\n# All README files\n' + allReadmeContents;
+  const finalContent = (instructionContent || '') + readmeSection;
   // Ensure .github directory exists in cwd
   if (!fs.existsSync(githubDir)) {
     fs.mkdirSync(githubDir);
   }
-  if (content) {
-    fs.writeFileSync(outputPath, content);
-    console.log(`✅ Copilot instructions generated: ${outputPath}`);
+  fs.writeFileSync(outputPath, finalContent);
+  if (instructionContent) {
+    console.log(successMessage);
   } else {
-    console.error('❌ Failed to generate copilot-instructions.md');
+    console.error(failureMessage);
   }
 }

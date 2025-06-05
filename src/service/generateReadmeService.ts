@@ -8,18 +8,23 @@ function findSubdirectories(folderPath: string): string[] {
     .map(entry => path.join(folderPath, entry.name));
 }
 
+
+const MAX_LINE_LENGTH = 120; // 一行あたりの最大文字数
+
 export async function generateReadmeService({
   folderPath,
   model,
   apiKey,
   apiUrl,
   recursive = false,
+  language = 'en',
 }: {
   folderPath: string;
   model: string;
   apiKey: string;
   apiUrl?: string;
   recursive?: boolean;
+  language?: string;
 }) {
   if (!fs.existsSync(folderPath)) {
     console.error(`Directory not found: ${folderPath}`);
@@ -28,10 +33,23 @@ export async function generateReadmeService({
   // 1. Generate README for this folder only
   const files = fs.readdirSync(folderPath).filter(f => fs.statSync(path.join(folderPath, f)).isFile());
   const fileSummaries = files
+    // readme.mdは除外
+    .filter(file => file.toLowerCase() !== 'readme.md')
+    // ファイル名を相対パスに変換
     .map(file => {
       const rel = path.relative(folderPath, path.join(folderPath, file));
-      const content = fs.readFileSync(path.join(folderPath, file), 'utf-8').slice(0, 1000);
-      return `## ${rel}\n\u0060\u0060\u0060\n${content}\n\u0060\u0060\u0060`;
+      const content = fs.readFileSync(path.join(folderPath, file), 'utf-8');
+
+      // 一行あたりの文字数を制限する
+      const lines = content.split('\n').map(line => {
+        if (line.length > MAX_LINE_LENGTH) {
+          const truncatedLine = line.substring(0, MAX_LINE_LENGTH - 3) + '...';
+          return truncatedLine; // 省略した行を返す
+        }
+        return line;
+      });
+
+      return `## ${rel}\n\u0060\u0060\u0060\n${lines.join('\n')}\n\u0060\u0060\u0060`;
     })
     .join('\n\n');
   // Read existing README.md if present
@@ -40,7 +58,7 @@ export async function generateReadmeService({
   if (fs.existsSync(readmePath)) {
     existingReadme = fs.readFileSync(readmePath, 'utf-8');
   }
-  const prompt = `\nBased on the contents of the files in the following folder, update the README.md so that it describes the purpose, rules, and roles of the files in this folder.\nIf a README.md already exists, use its content as a base and update it to reflect the current state of the folder.\nOutput only raw markdown content. Do NOT wrap with \"\"\"markdown or any code block.\nInclude the following:\nFolder path: ${folderPath}\n- Overview of the folder (natural language)\n  - Folder name (do not include path)\n  - Purpose of the folder\n- Naming conventions\n- Design policy\n- Technologies and libraries used\n- Concise explanation of the role of each file\n  - Display in table format\n    - File name\n    - Role\n    - Logic and functions\n      - Describe what logic or functions are implemented for each function\n    - Names of other files used\n      - Show dependencies\n- Code style and examples\n  - Explain implementation methods and code examples for each pattern\n- File templates and explanations\n- Coding rules based on the above\n- Notes for developers\n${existingReadme ? '\n---\n# Existing README.md\n' + existingReadme : ''}\n${fileSummaries}\n`;
+  const prompt = `\nBased on the contents of the files in the following folder, update the README.md so that it describes the purpose, rules, and roles of the files in this folder.\nIf a README.md already exists, use its content as a base and update it to reflect the current state of the folder.\nOutput only raw markdown content in ${language} language. Do NOT wrap with \"\"\"markdown or any code block.\nInclude the following:\nFolder path: ${folderPath}\n- Overview of the folder (natural language)\n  - Folder name (do not include path)\n  - Purpose of the folder\n- Naming conventions\n- Design policy\n- Technologies and libraries used\n- Concise explanation of the role of each file\n  - Display in table format\n    - File name\n    - Role\n    - Logic and functions\n      - Describe what logic or functions are implemented for each function\n    - Names of other files used\n      - Show dependencies\n- Code style and examples\n  - Explain implementation methods and code examples for each pattern\n- File templates and explanations\n- Coding rules based on the above\n- Notes for developers\n${existingReadme ? '\n---\n# Existing README.md\n' + existingReadme : ''}\n${fileSummaries}\n`;
   const llm = await getLLMRepository({ model, apiKey, apiUrl });
   const content = await llm.call(prompt);
   const outputPath = path.join(folderPath, 'README.md');
@@ -60,6 +78,7 @@ export async function generateReadmeService({
         apiKey,
         apiUrl,
         recursive: true,
+        language,
       });
     }
   }

@@ -4,15 +4,18 @@ import { LLMRepository } from './llm';
 export interface GeminiConfig {
   apiKey: string; // Required, API key for Google GenAI
   model?: string; // Optional, defaults to 'gemini-2.0-flash'
+  language?: string;
 }
 
 class GeminiClient implements LLMRepository {
   private client: GoogleGenAI;
   private model: string;
+  private language: string;
 
   constructor(config: GeminiConfig) {
     this.client = new GoogleGenAI({ apiKey: config.apiKey });
     this.model = config.model || 'gemini-2.0-flash';
+    this.language = config.language || 'en';
   }
 
   /**
@@ -22,7 +25,7 @@ class GeminiClient implements LLMRepository {
     try {
       const result = await this.client.models.generateContent({
         model: this.model,
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        contents: [{ role: 'user', parts: [{ text: `Generate the following in ${this.language} language: ${prompt}` }] }],
       });
       if (result.text) return result.text;
       if (
@@ -46,10 +49,12 @@ class GeminiClient implements LLMRepository {
 export const createGeminiClient = async (
   apiKey: string,
   model?: string,
+  language?: string,
 ): Promise<GeminiClient> => {
   return new GeminiClient({
     apiKey,
-    model
+    model,
+    language
   });
 };
 
