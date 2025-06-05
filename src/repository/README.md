@@ -1,102 +1,176 @@
-# README.md
+# src/repository
 
-## Overview of `repository` Folder
+## Overview
 
-- **Folder Name:** `repository`
-- **Purpose:** This folder houses the code responsible for interacting with Large Language Models (LLMs). It provides an abstraction layer that allows the application to use different LLMs (e.g., OpenAI, Gemini) without modifying the core logic. This promotes flexibility and adaptability to evolving LLM technologies.
+The `repository` folder contains the logic for interacting with different Large Language Models (LLMs) such as OpenAI's GPT models and Google's Gemini models. It provides an abstraction layer that allows the application to use different LLMs without needing to change the core logic. The folder handles client creation, API calls, and error handling for each LLM.
+
+- **Folder Name:** repository
+- **Purpose:** To provide a unified interface for interacting with different LLMs, abstracting away the specific details of each API.
 
 ## Naming Conventions
 
-- **Files:** Use descriptive names that clearly indicate the LLM provider or the purpose of the file (e.g., `openai.ts`, `llm.ts`, `gemini.ts`).
-- **Classes/Interfaces:** Use PascalCase (e.g., `OpenAIClient`, `LLMRepository`).
-- **Variables/Constants:** Use camelCase (e.g., `apiKey`, `model`).
-- **Methods:** Use camelCase (e.g., `call`, `getLLMRepository`).
+-   File names should be descriptive and related to the functionality they provide (e.g., `gemini.ts`, `openai.ts`, `llm.ts`).
+-   Class names should use PascalCase (e.g., `GeminiClient`, `OpenAIClient`).
+-   Interface names should use PascalCase (e.g., `LLMRepository`, `GeminiConfig`, `OpenAIConfig`).
+-   Variable and function names should use camelCase (e.g., `apiKey`, `createGeminiClient`).
 
 ## Design Policy
 
-- **Abstraction:** The primary design principle is abstraction. The `LLMRepository` interface defines a contract for interacting with any LLM. Concrete implementations (e.g., `OpenAIClient`, `GeminiClient`) adhere to this interface, allowing for easy switching between LLMs.
-- **Configuration:** LLM clients should be configurable via a configuration object passed to their constructor. This allows for customization of API keys, models, and other relevant parameters.
-- **Error Handling:** Implement robust error handling to gracefully manage potential issues during API calls to LLMs.
-- **Asynchronous Operations:** All interactions with LLMs should be asynchronous to prevent blocking the main thread.
+-   **Abstraction:** The primary design goal is to abstract the LLM interaction behind a common interface (`LLMRepository`).
+-   **Flexibility:** The code should be flexible enough to support different LLMs and configurations.
+-   **Error Handling:** Robust error handling is required to gracefully handle API failures and other potential issues.
+-   **Configuration:** LLM configurations should be easily configurable through a configuration object.
 
 ## Technologies and Libraries Used
 
-- **TypeScript:** For type safety and improved code organization.
-- **openai (npm package):**  Official OpenAI client library.
-- **@google/generative-ai:**  Official Google GenAI client library.
+-   TypeScript: Programming language.
+-   `openai`: OpenAI's official Node.js library for interacting with their API.
+-   `@google/genai`: Google's GenAI Node.js library for interacting with Gemini API.
 
-## File Roles and Responsibilities
+## File Roles
 
-| File Name     | Role                                            | Logic and Functions                                                                                                                         | Names of other files used |
-| ------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `llm.ts`      | Abstraction and Factory for LLM Clients         | - Defines the `LLMRepository` interface.  - Provides the `getLLMRepository` factory function, which instantiates and returns the appropriate LLM client based on the specified model.  Throws an error if the model is not supported.                                                | `openai.ts`, `gemini.ts`  |
-| `openai.ts`   | Implementation for OpenAI LLM interactions   | - Defines the `OpenAIClient` class, implementing `LLMRepository`.  - Implements the `call` method to interact with the OpenAI API and returns the response. - Provides `createOpenAIClient` function to asynchronously create an instance of the OpenAI client.    Sets a default model (`gpt-4o`) if one is not provided.                                 | `llm.ts`                 |
-| `gemini.ts`   | Implementation for Gemini LLM interactions   | - Defines the `GeminiClient` class, implementing `LLMRepository`.  - Implements the `call` method to interact with the Gemini API and returns the response. Sets a default model (`gemini-2.0-flash`) if one is not provided.        | `llm.ts`                 |
-
-### Logic and Functions Details
-
-*   **`llm.ts`**
-    *   **`LLMRepository` Interface:** Defines the `call` method, which accepts a prompt string and returns a Promise that resolves to a string representing the LLM's response.
-    *   **`getLLMRepository` Function:**  A factory function that takes a model name, API key and optional API url as input.  Based on the `model` string, it instantiates and returns the appropriate LLM client (e.g., `OpenAIClient`, `GeminiClient`). Throws an error if the model is not supported.
-
-*   **`openai.ts`**
-    *   **`OpenAIClient` Class:**
-        *   **Constructor:** Takes an `OpenAIConfig` object containing the API key, model name, and API URL.  Initializes the OpenAI client using the provided configuration. Sets a default model (`gpt-4o`) if one is not provided.
-        *   **`call` Method:** Takes a prompt string as input. Uses the OpenAI client to create a chat completion with the prompt. Returns a Promise that resolves to the content of the first choice in the completion response. Returns an empty string if no content is found.
-    *   **`createOpenAIClient` Function:** An async function to create an instance of the OpenAIClient. Takes `apiKey`, `model?` and `apiUrl?` as parameters.
-
-*   **`gemini.ts`**
-    *   **`GeminiClient` Class:**
-        *   **Constructor:** Takes a `GeminiConfig` object containing the API key and model name. Initializes the Gemini client using the provided configuration. Sets a default model (`gemini-2.0-flash`) if one is not provided.
-        *   **`call` Method:** Takes a prompt string as input. Uses the Gemini client to generate content based on the prompt. Returns a Promise that resolves to the content of the response.
+| File Name   | Role                                          | Logic and Functions                                                                                                                                                                                                                                                                                               | Names of other files used |
+| ----------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `gemini.ts` | Implements the Gemini LLM client.             | - `GeminiClient` class implements the `LLMRepository` interface.                                                                                                                                                                                                                                                     | `llm.ts`                  |
+|             |                                               | - Constructor initializes the Gemini client with API key and model.                                                                                                                                                                                                                                                      |                           |
+|             |                                               | - `call(prompt: string)`:  Takes a prompt and returns the Gemini API response. The logic generates the prompt in the specified language, calls the Gemini API and retrieves the response, handling various response structures and error scenarios. It constructs the prompt including the specified language. |                           |
+| `llm.ts`    | Defines the `LLMRepository` interface and factory function. | - `LLMRepository` interface defines the contract for LLM clients (the `call` method).                                                                                                                                                                                                                                       | `openai.ts`, `gemini.ts`   |
+|             |                                               | - `getLLMRepository({model, apiKey, apiUrl, language})`: Factory function that returns an instance of the appropriate LLM client (OpenAI or Gemini) based on the `model` parameter. It handles the client creation.                                                                                                     |                           |
+| `openai.ts` | Implements the OpenAI LLM client.             | - `OpenAIClient` class implements the `LLMRepository` interface.                                                                                                                                                                                                                                                      | `llm.ts`                  |
+|             |                                               | - Constructor initializes the OpenAI client with API key, model, and API URL.                                                                                                                                                                                                                                           |                           |
+|             |                                               | - `call(prompt: string)`: Takes a prompt and returns the OpenAI API response. The logic generates the prompt in the specified language, calls the OpenAI chat completion endpoint, retrieves the response, and handles potential errors. It constructs the prompt including the specified language.                 |                           |
 
 ## Code Style and Examples
 
-*   **Dependency Injection:** The `getLLMRepository` function uses a form of dependency injection to provide the appropriate LLM client.
+### `LLMRepository` Interface
 
-    ```typescript
-    const llm = await getLLMRepository({ model: 'gpt-4o', apiKey: 'YOUR_API_KEY' });
-    const response = await llm.call('Write a short poem.');
-    console.log(response);
-    ```
+```typescript
+export interface LLMRepository {
+  call(prompt: string): Promise<string>;
+}
+```
 
-*   **Asynchronous Operations:** All API calls to LLMs are asynchronous and use `async/await`.
+This interface defines the contract for all LLM clients. All LLM clients must implement the `call` method, which takes a prompt and returns a promise that resolves to the LLM's response.
 
-    ```typescript
-    async call(prompt: string): Promise<string> {
-      const res = await this.client.chat.completions.create({
+### Client Implementation (Example: `GeminiClient`)
+
+```typescript
+class GeminiClient implements LLMRepository {
+  private client: GoogleGenAI;
+  private model: string;
+  private language: string;
+
+  constructor(config: GeminiConfig) {
+    this.client = new GoogleGenAI({ apiKey: config.apiKey });
+    this.model = config.model || 'gemini-2.0-flash';
+    this.language = config.language || 'en';
+  }
+
+  async call(prompt: string): Promise<string> {
+    try {
+      const result = await this.client.models.generateContent({
         model: this.model,
-        messages: [{ role: 'user', content: prompt }],
+        contents: [{ role: 'user', parts: [{ text: `Generate the following in ${this.language} language: ${prompt}` }] }],
       });
-      return res.choices[0].message.content || '';
+      if (result.text) return result.text;
+      if (
+        result.candidates &&
+        result.candidates.length > 0 &&
+        result.candidates[0].content &&
+        Array.isArray(result.candidates[0].content.parts) &&
+        result.candidates[0].content.parts.length > 0 &&
+        typeof result.candidates[0].content.parts[0].text === 'string'
+      ) {
+        return result.candidates[0].content.parts[0].text || '';
+      }
+      return '';
+    } catch (error) {
+      console.error('Error calling Gemini API:', error);
+      throw error;
     }
-    ```
+  }
+}
+```
+
+This code shows how to implement the `LLMRepository` interface for the Gemini LLM. The constructor initializes the Gemini client with the API key. The `call` method makes the API call to Gemini and returns the response. Note the inclusion of language in the prompt.
+
+### Factory Function (Example: `getLLMRepository`)
+
+```typescript
+export async function getLLMRepository({
+  model,
+  apiKey,
+  apiUrl,
+  language = 'en',
+}: {
+  model: string;
+  apiKey: string;
+  apiUrl?: string;
+  language?: string;
+}) {
+  if (model.startsWith('gpt-')) {
+    return await createOpenAIClient(apiKey, model, apiUrl, language);
+  } else if (model.startsWith('gemini-')) {
+    return await createGeminiClient(apiKey, model, language);
+  } else {
+    throw new Error(`Unsupported model: ${model}`);
+  }
+}
+```
+
+This code shows how to use a factory function to create different LLM clients based on the `model` parameter.
 
 ## File Templates and Explanations
 
-*   **`llm.ts` (Interface):**
-    This file MUST contain the `LLMRepository` interface and the `getLLMRepository` factory function.  The interface defines the contract for all LLM clients. The factory determines which LLM client to return based on the configuration.
+### LLM Client Template
 
-*   **`openai.ts` (Implementation):**
-    Implementations like this one for OpenAI, MUST implement the `LLMRepository` interface.  The `call` method should use the appropriate API to interact with the LLM and return the response. The specific API and data transformations depend on the LLM being used.
+```typescript
+import { LLMRepository } from './llm';
 
-*   **`gemini.ts` (Implementation):**
-    Implementations like this one for Gemini, MUST implement the `LLMRepository` interface. The `call` method should use the appropriate API to interact with the LLM and return the response.
+export interface MyLLMConfig {
+  apiKey: string;
+  // Other configuration options
+}
 
-## Coding Rules Based on the Above
+class MyLLMClient implements LLMRepository {
+  private client: any; // Replace 'any' with the actual client type
+  private model: string;
 
-1.  **Adhere to Naming Conventions:** Consistently use the defined naming conventions for files, classes, variables, and methods.
-2.  **Implement the `LLMRepository` Interface:** All LLM client implementations must implement the `LLMRepository` interface.
-3.  **Use Asynchronous Operations:** All interactions with LLMs must be asynchronous.
-4.  **Handle Errors Gracefully:** Implement robust error handling to catch and manage potential errors during API calls.
-5.  **Use Configuration Objects:** LLM clients should be configurable via a configuration object passed to their constructor.
-6.  **Keep it Simple:** Follow the KISS principle.
-7.  **Default Models:** All LLM clients should have a default model in case one is not passed to the constuctor.
+  constructor(config: MyLLMConfig) {
+    // Initialize the client
+  }
+
+  async call(prompt: string): Promise<string> {
+    // Make the API call and return the response
+    return 'response'; // Replace with actual response
+  }
+}
+
+export const createMyLLMClient = async (
+  apiKey: string,
+  model?: string,
+): Promise<MyLLMClient> => {
+  return new MyLLMClient({
+    apiKey,
+  });
+};
+
+export default MyLLMClient;
+```
+
+This template provides a starting point for implementing a new LLM client.  Replace the comments with the actual implementation details.
+
+## Coding Rules
+
+-   All LLM clients must implement the `LLMRepository` interface.
+-   Use dependency injection for configuration parameters.
+-   Implement robust error handling.
+-   Write unit tests for all code.
+-   Include comments to explain complex logic.
 
 ## Notes for Developers
 
-*   When adding a new LLM integration, create a new file (e.g., `newllm.ts`) and implement the `LLMRepository` interface.
-*   Update the `getLLMRepository` function in `llm.ts` to support the new LLM.
-*   Ensure that the new LLM client is properly configured with an API key and other necessary parameters.
-*   Thoroughly test the new LLM integration to ensure that it works as expected.
-```
+-   When adding a new LLM, ensure that it is properly integrated into the `getLLMRepository` factory function.
+-   Pay attention to API rate limits and implement appropriate retry logic if necessary.
+-   Handle different response formats from different LLMs gracefully.
+-   The prompt sent to the LLM should always include the target language to ensure proper output.

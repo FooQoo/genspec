@@ -11,15 +11,17 @@ export async function getLLMRepository({
   model,
   apiKey,
   apiUrl,
+  language = 'en',
 }: {
   model: string;
   apiKey: string;
   apiUrl?: string;
+  language?: string;
 }) {
   if (model.startsWith('gpt-')) {
-    return await createOpenAIClient(apiKey, model, apiUrl);
+    return await createOpenAIClient(apiKey, model, apiUrl, language);
   } else if (model.startsWith('gemini-')) {
-    return await createGeminiClient(apiKey, model);
+    return await createGeminiClient(apiKey, model, language);
   } else {
     throw new Error(`Unsupported model: ${model}`);
   }
